@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Articles App Documentation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #222;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ddd;
+      overflow-x: auto;
+    }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #eef;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    .file-structure {
+      font-family: monospace;
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    ul {
+      margin-left: 20px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Articles App Documentation</h1>
+  
+  <div class="section">
+    <h2>Overview</h2>
+    <p>
+      This Articles App is a production‑ready, data‑safe, self‑healing application designed for a high‑reliability environment. The app combines dynamic metadata management using MySQL with the speed and portability of serving static article files.
+    </p>
+    <p>
+      Each article is stored in its own directory (using sequential directory numbers, starting at 1) along with a JSON metadata file and any associated media (images, videos, etc.). In the event of a database compromise or migration, you can restore the MySQL metadata from these self‑contained directories.
+    </p>
+  </div>
+  
+  <div class="section">
+    <h2>File Structure</h2>
+    <p>The recommended file structure for the app is as follows:</p>
+    <div class="file-structure">
+<pre>
+/your-app-folder
+├── config.php              - Contains MySQL configuration (DSN, username, password)
+├── install.php             - Installation script to create the database and table
+├── index.php               - Main page: displays articles, theme links, and the post form
+├── submit_article.php      - Handles new article creation (static file, JSON metadata, MySQL insert)
+├── reply.php               - Handles replies: updates static article file and MySQL timestamp
+├── import_metadata.php     - Utility script to scan /articles and rebuild the MySQL DB from JSON metadata
+├── documentation.html      - (This file) Detailed explanation of the app
+├── error.txt               - File for PHP error logging
+├── css/                    - Directory containing theme stylesheets
+│   ├── dark.css
+│   └── light.css
+└── articles/               - Contains article directories (each article is self‑contained)
+    ├── 1/                - Example article directory (#1)
+    │   ├── index.html    - Static article page
+    │   └── metadata.json - JSON metadata file for article #1
+    ├── 2/                - Example article directory (#2)
+    │   ├── index.html
+    │   └── metadata.json
+    └── ...               - More article directories
+</pre>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>Key Components</h2>
+    <h3>config.php</h3>
+    <p>
+      This file contains your MySQL database credentials. By centralizing your DB settings here, you only need to update one file if the credentials change.
+    </p>
+    <pre><code>
+// config.php
+<?php
+declare(strict_types=1);
+$dsn    = 'mysql:host=localhost;dbname=articles_db;charset=utf8mb4';
+$dbUser = 'root';
+$dbPass = ''; // Default for XAMPP is often empty
+?>
+    </code></pre>
+    
+    <h3>install.php</h3>
+    <p>
+      The install script checks for (and creates if needed) the MySQL database and the <code>articles</code> table. Run it once (via http://localhost/install.php) to set up your environment.
+    </p>
+    <pre><code>
+// install.php (summary)
+// - Connects to MySQL without specifying a DB
+// - Creates the database (articles_db) if not exists
+// - Connects to the database and creates the "articles" table if not exists
+    </code></pre>
+    
+    <h3>index.php</h3>
+    <p>
+      This is the main page. It retrieves article records from MySQL and lists them with links (displayed in green). It also displays a post form for submitting new articles, and includes theme-switching links ([D] for Dark and [L] for Light).
+    </p>
+    <pre><code>
+// index.php (summary)
+// - Includes config.php to get DB credentials
+// - Connects to MySQL and fetches all article records
+// - Displays a top bar with theme links and a static post form
+// - Lists all articles with links to their static pages
+    </code></pre>
+    
+    <h3>submit_article.php</h3>
+    <p>
+      This script handles new article submissions. It performs the following:
+    </p>
+    <ul>
+      <li>Begins a transaction in MySQL to safely generate a sequential directory number.</li>
+      <li>Creates a new directory under <code>/articles</code> (e.g. "1", "2", …).</li>
+      <li>Handles any file uploads (images/videos) and moves them into the article directory.</li>
+      <li>Generates a static HTML file (<code>index.html</code>) with the article content, media, and a reply form.</li>
+      <li>Creates a per‑article JSON metadata file (<code>metadata.json</code>) in the same directory.</li>
+      <li>Inserts a record into the MySQL database with the article’s metadata.</li>
+      <li>Commits the transaction so concurrent posts are handled safely.</li>
+    </ul>
+    <pre><code>
+// submit_article.php (summary)
+// See full code for details.
+    </code></pre>
+    
+    <h3>reply.php</h3>
+    <p>
+      This file processes replies to an article:
+    </p>
+    <ul>
+      <li>Validates reply input and determines the target article directory.</li>
+      <li>Reads the static article file, finds a marker ("&lt;!-- REPLIES END --&gt;"), and inserts the new reply HTML before that marker.</li>
+      <li>Uses file locking (flock) to ensure safe concurrent file writes.</li>
+      <li>Updates the article's <code>updated_at</code> timestamp in MySQL.</li>
+      <li>Redirects the user back to the updated article page.</li>
+    </ul>
+    <pre><code>
+// reply.php (summary)
+// See full code for details.
+    </code></pre>
+    
+    <h3>import_metadata.php</h3>
+    <p>
+      This utility script scans the <code>/articles</code> directory, reads each article’s <code>metadata.json</code> file, and inserts its data into the MySQL <code>articles</code> table. It is used to rebuild the DB if you need to start with a fresh MySQL database.
+    </p>
+    <pre><code>
+// import_metadata.php (summary)
+// See full code for details.
+    </code></pre>
+  </div>
+  
+  <div class="section">
+    <h2>Static Article Directories</h2>
+    <p>
+      Every article is stored in its own directory (named with a sequential number). Each directory is self-contained and includes:
+    </p>
+    <ul>
+      <li><strong>index.html:</strong> The static HTML article page (with article content, media, and reply form).</li>
+      <li><strong>metadata.json:</strong> A JSON file with metadata for that article (e.g. directory number, subject, timestamps).</li>
+      <li>Any uploaded media (images or videos) are also stored here.</li>
+    </ul>
+    <p>
+      This design allows you to back up the entire site simply by archiving the <code>/articles</code> folder. In a restoration scenario, you can repopulate the MySQL database using the metadata from each directory.
+    </p>
+  </div>
+  
+  <div class="section">
+    <h2>Theme Switching</h2>
+    <p>
+      The app supports theme switching with two links:
+    </p>
+    <ul>
+      <li><strong>[D]</strong> – Switches to the dark theme.</li>
+      <li><strong>[L]</strong> – Switches to the light theme.</li>
+    </ul>
+    <p>
+      The selected theme is stored in the browser's <code>localStorage</code> and is applied to both the main page and all article pages via the linked CSS file.
+    </p>
+  </div>
+  
+  <div class="section">
+    <h2>Error Logging</h2>
+    <p>
+      Any PHP errors are logged to the file <code>error.txt</code> in the application root. This log is invaluable for troubleshooting production issues without exposing errors to visitors.
+    </p>
+  </div>
+  
+  <div class="section">
+    <h2>Backup and Restoration</h2>
+    <p>
+      Since all article content and metadata is stored as static files within the <code>/articles</code> directory, backing up your site is as simple as archiving this folder. If your MySQL database becomes compromised or you migrate hosts, you can start with a fresh MySQL database and run <code>import_metadata.php</code> to restore all article metadata from the individual <code>metadata.json</code> files.
+    </p>
+  </div>
+  
+  <div class="section">
+    <h2>Production Considerations</h2>
+    <ul>
+      <li>Use <code>config.php</code> to centralize and secure your MySQL credentials.</li>
+      <li>Run <code>install.php</code> once to set up the database; then remove or secure the file.</li>
+      <li>Regularly back up the <code>/articles</code> directory and your MySQL database.</li>
+      <li>Monitor <code>error.txt</code> for any issues.</li>
+      <li>Implement additional security measures (e.g. CSRF tokens) if necessary for your environment.</li>
+    </ul>
+  </div>
+  
+  <div class="section">
+    <h2>Conclusion</h2>
+    <p>
+      The Articles App is designed to provide fast, reliable content delivery using static files, while using MySQL to handle metadata and concurrency. With each article stored in its own self-contained directory (including a <code>metadata.json</code> file), the system is both production‑ready and easy to back up or restore. For any future migration or in case of a security incident, you can simply reinstall the app, restore the <code>/articles</code> directory, and run the import script to rebuild the database.
+    </p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,82 @@
+/* css/light.css */
+body {
+  background-color: #f5f5f5;
+  color: #333;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Top Bar Styles */
+.top-bar {
+  padding: 10px;
+  background-color: #ddd;
+}
+
+.top-bar-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.top-bar-inner a {
+  margin: 0 10px;
+  color: #333;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.top-bar-inner a:hover {
+  text-decoration: underline;
+}
+
+/* Article container and content */
+.article-container {
+  margin: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+.content {
+  margin-bottom: 20px;
+}
+
+/* Form elements */
+input, textarea, button {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 5px;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Responsive media */
+.media {
+  text-align: center;
+  margin: 15px 0;
+}
+
+/* Updated media rules: limit to 75% of screen width and center */
+.media img, .media video {
+  max-width: 75%;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Back link and replies */
+.back-button {
+  color: #333;
+  text-decoration: none;
+  font-size: 1.1em;
+}
+
+.reply {
+  margin-top: 10px;
+}
